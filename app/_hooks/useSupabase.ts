@@ -47,7 +47,7 @@ export function useClasses() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setSupabaseClasses(data?.map(c => ({ id: c.id, name: c.name })) || []);
+      setSupabaseClasses(data?.map((c: any) => ({ id: c.id, name: c.name })) || []);
     } catch (error) {
       console.error('Error loading classes:', error);
     } finally {
@@ -237,7 +237,7 @@ export function useAttendance() {
         .order('date', { ascending: false });
 
       if (error) throw error;
-      setSupabaseAttendance(data?.map(a => ({
+      setSupabaseAttendance(data?.map((a: any) => ({
         id: a.id,
         date: a.date,
         classId: a.class_id,
