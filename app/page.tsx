@@ -22,6 +22,20 @@ export default function Home() {
             <div className="text-lg font-semibold">Sınıflar</div>
             <div className="text-sm text-black/70 dark:text-white/70">Sınıf bazında takip</div>
           </a>
+          <a
+            href="/devamsizlik"
+            className="rounded-lg border border-black/[.08] dark:border-white/[.145] p-4 hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] transition-colors text-left"
+          >
+            <div className="text-lg font-semibold">Devamsızlık</div>
+            <div className="text-sm text-black/70 dark:text-white/70">Öğrenci devam durumu kaydı</div>
+          </a>
+          <a
+            href="/raporlar"
+            className="rounded-lg border border-black/[.08] dark:border-white/[.145] p-4 hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] transition-colors text-left"
+          >
+            <div className="text-lg font-semibold">Raporlar</div>
+            <div className="text-sm text-black/70 dark:text-white/70">Devamsızlık raporları ve istatistikler</div>
+          </a>
         </div>
       </div>
     </main>
