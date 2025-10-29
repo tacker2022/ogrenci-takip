@@ -1,31 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../_lib/supabase";
+import { supabase, isSupabaseConfigured } from "../_lib/supabase";
+import { useLocalStorage } from "../_components/useLocalStorage";
 import type { ClassRoom, Student, Attendance } from "../_types";
 
 // Classes hook
 export function useClasses() {
-  const [classes, setClasses] = useState<ClassRoom[]>([]);
+  const [localClasses, setLocalClasses] = useLocalStorage<ClassRoom[]>("classes", []);
+  const [supabaseClasses, setSupabaseClasses] = useState<ClassRoom[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadClasses();
-    
-    // Real-time subscription
-    const channel = supabase
-      .channel('classes-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
-        loadClasses();
-      })
-      .subscribe();
+  // Use Supabase if configured, otherwise LocalStorage
+  const classes = isSupabaseConfigured ? supabaseClasses : localClasses;
+  const setClasses = isSupabaseConfigured ? setSupabaseClasses : setLocalClasses;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  useEffect(() => {
+    if (isSupabaseConfigured && supabase) {
+      loadClasses();
+      
+      // Real-time subscription
+      const channel = supabase
+        .channel('classes-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
+          loadClasses();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   async function loadClasses() {
+    if (!isSupabaseConfigured || !supabase) {
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('classes')
@@ -33,7 +47,7 @@ export function useClasses() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setClasses(data || []);
+      setSupabaseClasses(data?.map(c => ({ id: c.id, name: c.name })) || []);
     } catch (error) {
       console.error('Error loading classes:', error);
     } finally {
@@ -42,6 +56,10 @@ export function useClasses() {
   }
 
   async function addClass(classRoom: ClassRoom) {
+    if (!isSupabaseConfigured || !supabase) {
+      setLocalClasses([...localClasses, { id: crypto.randomUUID(), name: classRoom.name }]);
+      return;
+    }
     const { data, error } = await supabase
       .from('classes')
       .insert({ name: classRoom.name })
@@ -49,28 +67,36 @@ export function useClasses() {
       .single();
 
     if (error) throw error;
-    if (data) setClasses([...classes, { id: data.id, name: data.name }]);
+    if (data) setSupabaseClasses([...supabaseClasses, { id: data.id, name: data.name }]);
     return data;
   }
 
   async function updateClass(id: string, name: string) {
+    if (!isSupabaseConfigured || !supabase) {
+      setLocalClasses(localClasses.map(c => c.id === id ? { ...c, name } : c));
+      return;
+    }
     const { error } = await supabase
       .from('classes')
       .update({ name })
       .eq('id', id);
 
     if (error) throw error;
-    setClasses(classes.map(c => c.id === id ? { ...c, name } : c));
+    setSupabaseClasses(supabaseClasses.map(c => c.id === id ? { ...c, name } : c));
   }
 
   async function deleteClass(id: string) {
+    if (!isSupabaseConfigured || !supabase) {
+      setLocalClasses(localClasses.filter(c => c.id !== id));
+      return;
+    }
     const { error } = await supabase
       .from('classes')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
-    setClasses(classes.filter(c => c.id !== id));
+    setSupabaseClasses(supabaseClasses.filter(c => c.id !== id));
   }
 
   return { classes, loading, addClass, updateClass, deleteClass, refresh: loadClasses };
@@ -78,25 +104,37 @@ export function useClasses() {
 
 // Students hook
 export function useStudents() {
-  const [students, setStudents] = useState<Student[]>([]);
+  const [localStudents, setLocalStudents] = useLocalStorage<Student[]>("students", []);
+  const [supabaseStudents, setSupabaseStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadStudents();
-    
-    const channel = supabase
-      .channel('students-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
-        loadStudents();
-      })
-      .subscribe();
+  const students = isSupabaseConfigured ? supabaseStudents : localStudents;
+  const setStudents = isSupabaseConfigured ? setSupabaseStudents : setLocalStudents;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  useEffect(() => {
+    if (isSupabaseConfigured && supabase) {
+      loadStudents();
+      
+      const channel = supabase
+        .channel('students-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
+          loadStudents();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   async function loadStudents() {
+    if (!isSupabaseConfigured || !supabase) {
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('students')
@@ -104,7 +142,7 @@ export function useStudents() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setStudents(data?.map(s => ({ id: s.id, name: s.name, classId: s.class_id })) || []);
+      setSupabaseStudents(data?.map((s: any) => ({ id: s.id, name: s.name, classId: s.class_id })) || []);
     } catch (error) {
       console.error('Error loading students:', error);
     } finally {
@@ -113,6 +151,10 @@ export function useStudents() {
   }
 
   async function addStudent(student: Student) {
+    if (!isSupabaseConfigured || !supabase) {
+      setLocalStudents([...localStudents, { id: crypto.randomUUID(), name: student.name, classId: student.classId }]);
+      return;
+    }
     const { data, error } = await supabase
       .from('students')
       .insert({ name: student.name, class_id: student.classId })
@@ -120,28 +162,36 @@ export function useStudents() {
       .single();
 
     if (error) throw error;
-    if (data) setStudents([...students, { id: data.id, name: data.name, classId: data.class_id }]);
+    if (data) setSupabaseStudents([...supabaseStudents, { id: data.id, name: data.name, classId: data.class_id }]);
     return data;
   }
 
   async function updateStudent(id: string, name: string, classId: string) {
+    if (!isSupabaseConfigured || !supabase) {
+      setLocalStudents(localStudents.map(s => s.id === id ? { id, name, classId } : s));
+      return;
+    }
     const { error } = await supabase
       .from('students')
       .update({ name, class_id: classId })
       .eq('id', id);
 
     if (error) throw error;
-    setStudents(students.map(s => s.id === id ? { id, name, classId } : s));
+    setSupabaseStudents(supabaseStudents.map(s => s.id === id ? { id, name, classId } : s));
   }
 
   async function deleteStudent(id: string) {
+    if (!isSupabaseConfigured || !supabase) {
+      setLocalStudents(localStudents.filter(s => s.id !== id));
+      return;
+    }
     const { error } = await supabase
       .from('students')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
-    setStudents(students.filter(s => s.id !== id));
+    setSupabaseStudents(supabaseStudents.filter(s => s.id !== id));
   }
 
   return { students, loading, addStudent, updateStudent, deleteStudent, refresh: loadStudents };
@@ -149,25 +199,37 @@ export function useStudents() {
 
 // Attendance hook
 export function useAttendance() {
-  const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [localAttendance, setLocalAttendance] = useLocalStorage<Attendance[]>("attendance", []);
+  const [supabaseAttendance, setSupabaseAttendance] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadAttendance();
-    
-    const channel = supabase
-      .channel('attendance-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance' }, () => {
-        loadAttendance();
-      })
-      .subscribe();
+  const attendance = isSupabaseConfigured ? supabaseAttendance : localAttendance;
+  const setAttendance = isSupabaseConfigured ? setSupabaseAttendance : setLocalAttendance;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  useEffect(() => {
+    if (isSupabaseConfigured && supabase) {
+      loadAttendance();
+      
+      const channel = supabase
+        .channel('attendance-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance' }, () => {
+          loadAttendance();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   async function loadAttendance() {
+    if (!isSupabaseConfigured || !supabase) {
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('attendance')
@@ -175,7 +237,7 @@ export function useAttendance() {
         .order('date', { ascending: false });
 
       if (error) throw error;
-      setAttendance(data?.map(a => ({
+      setSupabaseAttendance(data?.map(a => ({
         id: a.id,
         date: a.date,
         classId: a.class_id,
@@ -190,6 +252,20 @@ export function useAttendance() {
   }
 
   async function setAttendanceStatus(a: Attendance) {
+    if (!isSupabaseConfigured || !supabase) {
+      const existing = localAttendance.find(
+        (at) => at.date === a.date && at.classId === a.classId && at.studentId === a.studentId
+      );
+      if (existing) {
+        setLocalAttendance(localAttendance.map(at => 
+          at.id === existing.id ? { ...at, status: a.status } : at
+        ));
+      } else {
+        setLocalAttendance([...localAttendance, a]);
+      }
+      return;
+    }
+
     // Check if record exists
     const existing = attendance.find(
       (at) => at.date === a.date && at.classId === a.classId && at.studentId === a.studentId
@@ -213,7 +289,7 @@ export function useAttendance() {
           studentId: data.student_id,
           status: data.status
         };
-        setAttendance(attendance.map(at => at.id === existing.id ? updated : at));
+        setSupabaseAttendance(supabaseAttendance.map(at => at.id === existing.id ? updated : at));
       }
     } else {
       // Insert new
@@ -237,7 +313,7 @@ export function useAttendance() {
           studentId: data.student_id,
           status: data.status
         };
-        setAttendance([...attendance, newRecord]);
+        setSupabaseAttendance([...supabaseAttendance, newRecord]);
       }
     }
   }
