@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../_lib/supabase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../_lib/firebase";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,18 +20,11 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        alert("Kayıt başarılı! Email'inizi kontrol edin (eğer email doğrulama açıksa).");
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("Kayıt başarılı! Giriş yapabilirsiniz.");
+        setIsSignUp(false);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
+        await signInWithEmailAndPassword(auth, email, password);
         router.push("/");
         router.refresh();
       }

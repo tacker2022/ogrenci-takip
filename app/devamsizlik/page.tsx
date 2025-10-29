@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useClasses, useStudents, useAttendance } from "../_hooks/useSupabase";
+import { useClasses, useStudents, useAttendance } from "../_hooks/useFirebase";
 import type { Attendance } from "../_types";
 
 export default function AttendancePage() {

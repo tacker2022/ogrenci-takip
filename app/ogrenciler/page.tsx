@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import StudentForm from "../_components/StudentForm";
 import StudentList from "../_components/StudentList";
-import { useStudents, useClasses } from "../_hooks/useSupabase";
+import { useStudents, useClasses } from "../_hooks/useFirebase";
 import type { Student } from "../_types";
 
 export default function StudentsPage() {

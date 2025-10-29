@@ -1,6 +1,6 @@
 "use client";
 
-import { useClasses } from "../_hooks/useSupabase";
+import { useClasses } from "../_hooks/useFirebase";
 import ClassForm from "../_components/ClassForm";
 import ClassList from "../_components/ClassList";
 

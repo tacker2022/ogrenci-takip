@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useClasses, useStudents, useAttendance } from "../_hooks/useSupabase";
+import { useClasses, useStudents, useAttendance } from "../_hooks/useFirebase";
 
 function parseDate(s: string) {
   return new Date(s + "T00:00:00");
