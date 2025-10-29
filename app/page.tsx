@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="min-h-screen flex items-center justify-center p-8">
@@ -8,34 +10,34 @@ export default function Home() {
           sayfası. Aşağıdaki bağlantılardan ilgili bölümlere geçebilirsiniz.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <a
+          <Link
             href="/ogrenciler"
             className="rounded-lg border border-black/[.08] dark:border-white/[.145] p-4 hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] transition-colors text-left"
           >
             <div className="text-lg font-semibold">Öğrenciler</div>
             <div className="text-sm text-black/70 dark:text-white/70">Öğrenci listesi ve detaylar</div>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/siniflar"
             className="rounded-lg border border-black/[.08] dark:border-white/[.145] p-4 hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] transition-colors text-left"
           >
             <div className="text-lg font-semibold">Sınıflar</div>
             <div className="text-sm text-black/70 dark:text-white/70">Sınıf bazında takip</div>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/devamsizlik"
             className="rounded-lg border border-black/[.08] dark:border-white/[.145] p-4 hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] transition-colors text-left"
           >
             <div className="text-lg font-semibold">Devamsızlık</div>
             <div className="text-sm text-black/70 dark:text-white/70">Öğrenci devam durumu kaydı</div>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/raporlar"
             className="rounded-lg border border-black/[.08] dark:border-white/[.145] p-4 hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] transition-colors text-left"
           >
             <div className="text-lg font-semibold">Raporlar</div>
             <div className="text-sm text-black/70 dark:text-white/70">Devamsızlık raporları ve istatistikler</div>
-          </a>
+          </Link>
         </div>
       </div>
     </main>
