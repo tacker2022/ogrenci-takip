@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useLocalStorage } from "../_components/useLocalStorage";
-import type { Attendance, ClassRoom, Student } from "../_types";
+import { useClasses, useStudents, useAttendance } from "../_hooks/useSupabase";
+import type { Attendance } from "../_types";
 
 export default function AttendancePage() {
-  const [classes] = useLocalStorage<ClassRoom[]>("classes", []);
-  const [students] = useLocalStorage<Student[]>("students", []);
-  const [attendance, setAttendance] = useLocalStorage<Attendance[]>("attendance", []);
+  const { classes, loading: classesLoading } = useClasses();
+  const { students, loading: studentsLoading } = useStudents();
+  const { attendance, setAttendanceStatus } = useAttendance();
 
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [classId, setClassId] = useState<string>(classes[0]?.id ?? "");
@@ -22,9 +22,17 @@ export default function AttendancePage() {
   }
 
   function setStatus(studentId: string, status: Attendance["status"]) {
-    const id = `${date}-${classId}-${studentId}`;
-    const rest = attendance.filter((a) => a.id !== id);
-    setAttendance([...rest, { id, date, classId, studentId, status }]);
+    const existing = attendance.find((a) => a.date === date && a.classId === classId && a.studentId === studentId);
+    const id = existing?.id || crypto.randomUUID();
+    setAttendanceStatus({ id, date, classId, studentId, status });
+  }
+
+  if (classesLoading || studentsLoading) {
+    return (
+      <main className="max-w-3xl mx-auto p-8">
+        <p className="text-black/60 dark:text-white/60">Yükleniyor...</p>
+      </main>
+    );
   }
 
   return (

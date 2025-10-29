@@ -1,17 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useLocalStorage } from "../_components/useLocalStorage";
-import type { Attendance, ClassRoom, Student } from "../_types";
+import { useClasses, useStudents, useAttendance } from "../_hooks/useSupabase";
 
 function parseDate(s: string) {
   return new Date(s + "T00:00:00");
 }
 
 export default function ReportsPage() {
-  const [classes] = useLocalStorage<ClassRoom[]>("classes", []);
-  const [students] = useLocalStorage<Student[]>("students", []);
-  const [attendance] = useLocalStorage<Attendance[]>("attendance", []);
+  const { classes, loading: classesLoading } = useClasses();
+  const { students, loading: studentsLoading } = useStudents();
+  const { attendance, loading: attendanceLoading } = useAttendance();
 
   const [classId, setClassId] = useState<string>(classes[0]?.id ?? "");
   const [from, setFrom] = useState<string>(new Date().toISOString().slice(0, 10));
@@ -35,6 +34,14 @@ export default function ReportsPage() {
       return { student: s, present, absent, late };
     });
   }, [attendance, filteredStudents, classId, from, to]);
+
+  if (classesLoading || studentsLoading || attendanceLoading) {
+    return (
+      <main className="max-w-4xl mx-auto p-8">
+        <p className="text-black/60 dark:text-white/60">Yükleniyor...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-4xl mx-auto p-8 space-y-6">

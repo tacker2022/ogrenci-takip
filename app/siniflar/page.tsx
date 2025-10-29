@@ -1,19 +1,27 @@
 "use client";
 
-import { useLocalStorage } from "../_components/useLocalStorage";
+import { useClasses } from "../_hooks/useSupabase";
 import ClassForm from "../_components/ClassForm";
 import ClassList from "../_components/ClassList";
-import type { ClassRoom } from "../_types";
 
 export default function ClassesPage() {
-  const [classes, setClasses] = useLocalStorage<ClassRoom[]>("classes", []);
+  const { classes, loading, addClass, deleteClass } = useClasses();
 
-  function handleAdd(c: ClassRoom) {
-    setClasses([...classes, c]);
+  function handleAdd(c: { name: string }) {
+    addClass({ id: "", name: c.name });
   }
 
   function handleDelete(id: string) {
-    setClasses(classes.filter((c) => c.id !== id));
+    if (!window.confirm("Bu sınıfı silmek istediğinize emin misiniz? Sınıftaki tüm öğrenciler de silinecektir.")) return;
+    deleteClass(id);
+  }
+
+  if (loading) {
+    return (
+      <main className="max-w-3xl mx-auto p-8">
+        <p className="text-black/60 dark:text-white/60">Yükleniyor...</p>
+      </main>
+    );
   }
 
   return (

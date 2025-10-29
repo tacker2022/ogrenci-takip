@@ -3,27 +3,35 @@
 import { useMemo, useState } from "react";
 import StudentForm from "../_components/StudentForm";
 import StudentList from "../_components/StudentList";
-import { useLocalStorage } from "../_components/useLocalStorage";
-import type { ClassRoom, Student } from "../_types";
+import { useStudents, useClasses } from "../_hooks/useSupabase";
+import type { Student } from "../_types";
 
 export default function StudentsPage() {
-  const [students, setStudents] = useLocalStorage<Student[]>("students", []);
-  const [classes] = useLocalStorage<ClassRoom[]>("classes", []);
+  const { students, loading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudents();
+  const { classes, loading: classesLoading } = useClasses();
 
   const [query, setQuery] = useState("");
   const [filterClassId, setFilterClassId] = useState<string>("");
 
   function handleAdd(student: Student) {
-    setStudents([...students, student]);
+    addStudent(student);
   }
 
   function handleUpdate(updated: Student) {
-    setStudents(students.map((s) => (s.id === updated.id ? updated : s)));
+    updateStudent(updated.id, updated.name, updated.classId);
   }
 
   function handleDelete(id: string) {
     if (!window.confirm("Bu öğrenciyi silmek istediğinize emin misiniz?")) return;
-    setStudents(students.filter((s) => s.id !== id));
+    deleteStudent(id);
+  }
+
+  if (studentsLoading || classesLoading) {
+    return (
+      <main className="max-w-3xl mx-auto p-8">
+        <p className="text-black/60 dark:text-white/60">Yükleniyor...</p>
+      </main>
+    );
   }
 
   const filtered = useMemo(() => {
